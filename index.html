@@ -104,9 +104,17 @@
     const statusBox = document.getElementById("statusBox");
     let tracks = JSON.parse(localStorage.getItem("tracks") || "[]");
     let currentIdx = -1;
+    let triedFallback = false;
 
     function setStatus(msg) {
       statusBox.innerText = "Статус: " + msg;
+    }
+
+    function getCandidateUrls(id) {
+      return [
+        `https://drive.google.com/uc?export=download&id=${id}`,
+        `https://drive.usercontent.google.com/download?id=${id}&export=download`
+      ];
     }
 
     audio.addEventListener("loadstart", () => setStatus("загрузка потока..."));
@@ -116,6 +124,17 @@
       if (audio.currentTime > 0) setStatus("на паузе");
     });
     audio.addEventListener("error", () => {
+      const t = tracks[currentIdx];
+      if (t && !triedFallback) {
+        triedFallback = true;
+        const fallbackUrl = getCandidateUrls(t.id)[1];
+        setStatus("пробую альтернативную ссылку...");
+        audio.src = fallbackUrl;
+        audio.play().catch(e => {
+          setStatus("ошибка альтернативной ссылки: " + e.message);
+        });
+        return;
+      }
       const err = audio.error;
       setStatus("ошибка воспроизведения (код " + (err ? err.code : "?") + ")");
     });
@@ -141,13 +160,22 @@
       const t = tracks[idx];
       if (!t) return;
       currentIdx = idx;
-      const url = `https://drive.google.com/uc?export=download&id=${t.id}`;
+      triedFallback = false;
+      const url = getCandidateUrls(t.id)[0];
       audio.src = url;
       document.getElementById("nowPlaying").innerText = "Сейчас играет: " + t.title;
       document.getElementById("coverImg").src = t.cover || "";
       setStatus("запуск...");
       audio.play().catch(e => {
-        setStatus("не удалось запустить: " + e.message);
+        if (!triedFallback) {
+          triedFallback = true;
+          audio.src = getCandidateUrls(t.id)[1];
+          audio.play().catch(err2 => {
+            setStatus("не удалось запустить: " + err2.message);
+          });
+        } else {
+          setStatus("не удалось запустить: " + e.message);
+        }
       });
     }
 
