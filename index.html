@@ -86,14 +86,12 @@
     <div id="statusBox">Статус: ожидание</div>
     <button id="playPauseBtn" onclick="togglePlay()">Пауза / Играть</button>
     <button onclick="stopTrack()">Стоп</button>
-    <button onclick="openCurrentInBrowser()">Открыть ссылку в браузере</button>
-    <button onclick="runFetchDiag()">Тест заголовков (fetch)</button>
-    <audio id="audio" preload="metadata"></audio>
+    <audio id="audio" preload="auto"></audio>
   </div>
 
   <div class="box">
     <h3>Диагностика</h3>
-    <div id="diagLog">Лог пока пуст. Нажми ▶ на треке или запусти тест.</div>
+    <div id="diagLog">Лог готов. Нажми ▶ на треке.</div>
   </div>
 
   <div class="box">
@@ -121,8 +119,7 @@
     const diagLog = document.getElementById("diagLog");
     let tracks = JSON.parse(localStorage.getItem("tracks") || "[]");
     let currentIdx = -1;
-    let triedFallback = false;
-    let activeUrl = "";
+    let urlAttempt = 0;
 
     function logDiag(msg) {
       const time = new Date().toLocaleTimeString();
@@ -136,52 +133,47 @@
 
     function getCandidateUrls(id) {
       return [
-        `https://drive.google.com/uc?export=download&id=${id}`,
-        `https://drive.usercontent.google.com/download?id=${id}&export=download`
+        `https://drive.usercontent.google.com/download?id=${id}&export=download&confirm=t`,
+        `https://docs.google.com/uc?export=open&id=${id}`,
+        `https://drive.google.com/uc?export=download&confirm=t&id=${id}`
       ];
     }
 
-    audio.addEventListener("loadstart", () => {
-      setStatus("загрузка потока...");
-      logDiag("event: loadstart -> " + audio.currentSrc);
-    });
+    function tryNextUrl() {
+      const t = tracks[currentIdx];
+      if (!t) return;
+      const urls = getCandidateUrls(t.id);
+      if (urlAttempt >= urls.length) {
+        setStatus("все 3 варианта ссылок отклонены (нужен CapacitorHttp)");
+        logDiag("Все 3 варианта ссылок не сработали.");
+        return;
+      }
+      const nextUrl = urls[urlAttempt];
+      urlAttempt++;
+      setStatus(`попытка ${urlAttempt}/${urls.length}...`);
+      logDiag(`Попытка ${urlAttempt}: ${nextUrl}`);
+      audio.src = nextUrl;
+      audio.load();
+      audio.play().catch(e => {
+        logDiag(`play() rejected: ${e.message}`);
+      });
+    }
+
     audio.addEventListener("loadedmetadata", () => {
-      logDiag("event: loadedmetadata, duration=" + audio.duration);
+      logDiag("Успех! loadedmetadata, duration=" + audio.duration);
     });
     audio.addEventListener("canplay", () => {
       setStatus("готово к воспроизведению");
-      logDiag("event: canplay");
+      logDiag("canplay!");
     });
     audio.addEventListener("playing", () => {
-      setStatus("играет");
-      logDiag("event: playing");
-    });
-    audio.addEventListener("pause", () => {
-      if (audio.currentTime > 0) setStatus("на паузе");
-      logDiag("event: pause");
+      setStatus("играет!");
+      logDiag("playing!");
     });
     audio.addEventListener("error", () => {
       const err = audio.error;
-      const code = err ? err.code : "?";
-      const msg = err && err.message ? err.message : "";
-      logDiag(`event: error (code=${code}, msg=${msg}, src=${audio.src})`);
-
-      const t = tracks[currentIdx];
-      if (t && !triedFallback) {
-        triedFallback = true;
-        const fallbackUrl = getCandidateUrls(t.id)[1];
-        activeUrl = fallbackUrl;
-        setStatus("пробую альтернативную ссылку...");
-        logDiag("fallback -> " + fallbackUrl);
-        audio.src = fallbackUrl;
-        audio.load();
-        audio.play().catch(e => {
-          setStatus("ошибка альтернативной ссылки: " + e.message);
-          logDiag("fallback play() rejected: " + e.message);
-        });
-        return;
-      }
-      setStatus("ошибка воспроизведения (код " + code + ")");
+      logDiag(`error (code=${err ? err.code : "?"})`);
+      tryNextUrl();
     });
 
     function saveTracks() {
@@ -205,44 +197,10 @@
       const t = tracks[idx];
       if (!t) return;
       currentIdx = idx;
-      triedFallback = false;
-      activeUrl = getCandidateUrls(t.id)[0];
-      audio.src = activeUrl;
-      audio.load();
+      urlAttempt = 0;
       document.getElementById("nowPlaying").innerText = "Сейчас играет: " + t.title;
       document.getElementById("coverImg").src = t.cover || "";
-      setStatus("запуск...");
-      logDiag(`playByIndex(${idx}) id="${t.id}" -> ${activeUrl}`);
-      audio.play().catch(e => {
-        logDiag("initial play() rejected: " + e.message);
-      });
-    }
-
-    function openCurrentInBrowser() {
-      const t = tracks[currentIdx] || tracks[0];
-      if (!t) return alert("Сначала добавь трек в плейлист");
-      const url = activeUrl || getCandidateUrls(t.id)[1];
-      window.open(url, "_blank");
-    }
-
-    async function runFetchDiag() {
-      const t = tracks[currentIdx] || tracks[0];
-      if (!t) {
-        logDiag("fetch test: нет треков в плейлисте");
-        return;
-      }
-      const url = getCandidateUrls(t.id)[1];
-      logDiag("fetch test start: " + url);
-      try {
-        const res = await fetch(url);
-        const ct = res.headers.get("content-type");
-        const cd = res.headers.get("content-disposition");
-        const cl = res.headers.get("content-length");
-        logDiag(`fetch ok: status=${res.status}, redirected=${res.redirected}, finalUrl=${res.url}`);
-        logDiag(`headers: content-type="${ct}", content-disposition="${cd}", content-length="${cl}"`);
-      } catch (err) {
-        logDiag("fetch failed: " + err.name + ": " + err.message);
-      }
+      tryNextUrl();
     }
 
     function togglePlay() {
@@ -251,6 +209,7 @@
         audio.play().catch(e => setStatus("ошибка play: " + e.message));
       } else {
         audio.pause();
+        setStatus("на паузе");
       }
     }
 
