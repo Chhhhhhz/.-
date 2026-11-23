@@ -119,7 +119,7 @@
     const diagLog = document.getElementById("diagLog");
     let tracks = JSON.parse(localStorage.getItem("tracks") || "[]");
     let currentIdx = -1;
-    let urlAttempt = 0;
+    let currentBlobUrl = null;
 
     function logDiag(msg) {
       const time = new Date().toLocaleTimeString();
@@ -131,49 +131,78 @@
       statusBox.innerText = "Статус: " + msg;
     }
 
+    function revokeOldBlob() {
+      if (currentBlobUrl) {
+        URL.revokeObjectURL(currentBlobUrl);
+        currentBlobUrl = null;
+      }
+    }
+
     function getCandidateUrls(id) {
       return [
         `https://drive.usercontent.google.com/download?id=${id}&export=download&confirm=t`,
-        `https://docs.google.com/uc?export=open&id=${id}`,
         `https://drive.google.com/uc?export=download&confirm=t&id=${id}`
       ];
     }
 
-    function tryNextUrl() {
-      const t = tracks[currentIdx];
-      if (!t) return;
-      const urls = getCandidateUrls(t.id);
-      if (urlAttempt >= urls.length) {
-        setStatus("все 3 варианта ссылок отклонены (нужен CapacitorHttp)");
-        logDiag("Все 3 варианта ссылок не сработали.");
-        return;
+    async function fetchAudioBlob(id) {
+      const urls = getCandidateUrls(id);
+      for (let i = 0; i < urls.length; i++) {
+        const url = urls[i];
+        logDiag(`Загрузка потока (${i + 1}/${urls.length}): ${url}`);
+        try {
+          const res = await fetch(url, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+            }
+          });
+          const ct = res.headers.get("content-type") || "";
+          logDiag(`Ответ: status=${res.status}, content-type="${ct}"`);
+          if (!res.ok) continue;
+
+          const rawBlob = await res.blob();
+          logDiag(`Получено байт: ${rawBlob.size}, тип: "${rawBlob.type}"`);
+
+          // Если Google вернул HTML вместо аудио
+          if (ct.includes("text/html") || rawBlob.type.includes("text/html")) {
+            const snippet = (await rawBlob.text()).slice(0, 140).replace(/\s+/g, " ");
+            logDiag(`Пришёл HTML вместо аудио: ${snippet}`);
+            continue;
+          }
+
+          if (rawBlob.size < 1024) {
+            logDiag("Файл слишком маленький, пропускаем...");
+            continue;
+          }
+
+          // Принудительно задаём audio/mpeg, если сервер отдал application/octet-stream
+          const audioBlob = rawBlob.type.startsWith("audio/")
+            ? rawBlob
+            : new Blob([rawBlob], { type: "audio/mpeg" });
+
+          return audioBlob;
+        } catch (err) {
+          logDiag(`Ошибка fetch: ${err.message}`);
+        }
       }
-      const nextUrl = urls[urlAttempt];
-      urlAttempt++;
-      setStatus(`попытка ${urlAttempt}/${urls.length}...`);
-      logDiag(`Попытка ${urlAttempt}: ${nextUrl}`);
-      audio.src = nextUrl;
-      audio.load();
-      audio.play().catch(e => {
-        logDiag(`play() rejected: ${e.message}`);
-      });
+      return null;
     }
 
-    audio.addEventListener("loadedmetadata", () => {
-      logDiag("Успех! loadedmetadata, duration=" + audio.duration);
+    audio.addEventListener("playing", () => setStatus("играет!"));
+    audio.addEventListener("pause", () => {
+      if (audio.currentTime > 0 && !audio.ended) setStatus("на паузе");
     });
-    audio.addEventListener("canplay", () => {
-      setStatus("готово к воспроизведению");
-      logDiag("canplay!");
-    });
-    audio.addEventListener("playing", () => {
-      setStatus("играет!");
-      logDiag("playing!");
+    audio.addEventListener("ended", () => {
+      setStatus("трек завершён");
+      // Автопереход к следующему треку в плейлисте
+      if (currentIdx + 1 < tracks.length) {
+        playByIndex(currentIdx + 1);
+      }
     });
     audio.addEventListener("error", () => {
       const err = audio.error;
-      logDiag(`error (code=${err ? err.code : "?"})`);
-      tryNextUrl();
+      logDiag(`audio error: code=${err ? err.code : "?"}, msg=${err ? err.message : ""}`);
+      setStatus("ошибка декодирования аудио");
     });
 
     function saveTracks() {
@@ -193,14 +222,31 @@
       saveTracks();
     }
 
-    function playByIndex(idx) {
+    async function playByIndex(idx) {
       const t = tracks[idx];
       if (!t) return;
       currentIdx = idx;
-      urlAttempt = 0;
       document.getElementById("nowPlaying").innerText = "Сейчас играет: " + t.title;
       document.getElementById("coverImg").src = t.cover || "";
-      tryNextUrl();
+      setStatus("буферизация с Google Диска...");
+
+      audio.pause();
+      revokeOldBlob();
+
+      const blob = await fetchAudioBlob(t.id);
+      if (!blob) {
+        setStatus("не удалось получить аудиопоток");
+        return;
+      }
+
+      currentBlobUrl = URL.createObjectURL(blob);
+      audio.src = currentBlobUrl;
+      audio.load();
+      setStatus("запуск...");
+      audio.play().catch(e => {
+        logDiag("play() rejected: " + e.message);
+        setStatus("ошибка запуска: " + e.message);
+      });
     }
 
     function togglePlay() {
@@ -209,7 +255,6 @@
         audio.play().catch(e => setStatus("ошибка play: " + e.message));
       } else {
         audio.pause();
-        setStatus("на паузе");
       }
     }
 
