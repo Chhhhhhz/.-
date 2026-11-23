@@ -34,7 +34,18 @@ jobs:
           }
           EOF
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap init "My Player" "com.example.myplayer" --web-dir=www
+          cat << 'EOF' > capacitor.config.json
+          {
+            "appId": "com.example.myplayer",
+            "appName": "My Player",
+            "webDir": "www",
+            "plugins": {
+              "CapacitorHttp": {
+                "enabled": true
+              }
+            }
+          }
+          EOF
           npx cap add android
 
       - name: Build debug APK
