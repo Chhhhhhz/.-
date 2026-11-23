@@ -60,6 +60,12 @@
       justify-content: space-between;
       align-items: center;
     }
+    #statusBox {
+      margin-top: 8px;
+      font-size: 13px;
+      opacity: 0.85;
+      word-break: break-word;
+    }
   </style>
 </head>
 <body>
@@ -68,9 +74,10 @@
   <div class="box">
     <img id="coverImg" class="cover" src="" alt="Обложка" />
     <div id="nowPlaying">Ничего не играет</div>
+    <div id="statusBox">Статус: ожидание</div>
     <button id="playPauseBtn" onclick="togglePlay()">Пауза / Играть</button>
     <button onclick="stopTrack()">Стоп</button>
-    <audio id="audio"></audio>
+    <audio id="audio" preload="metadata"></audio>
   </div>
 
   <div class="box">
@@ -94,8 +101,24 @@
 
   <script>
     const audio = document.getElementById("audio");
+    const statusBox = document.getElementById("statusBox");
     let tracks = JSON.parse(localStorage.getItem("tracks") || "[]");
     let currentIdx = -1;
+
+    function setStatus(msg) {
+      statusBox.innerText = "Статус: " + msg;
+    }
+
+    audio.addEventListener("loadstart", () => setStatus("загрузка потока..."));
+    audio.addEventListener("canplay", () => setStatus("готово к воспроизведению"));
+    audio.addEventListener("playing", () => setStatus("играет"));
+    audio.addEventListener("pause", () => {
+      if (audio.currentTime > 0) setStatus("на паузе");
+    });
+    audio.addEventListener("error", () => {
+      const err = audio.error;
+      setStatus("ошибка воспроизведения (код " + (err ? err.code : "?") + ")");
+    });
 
     function saveTracks() {
       localStorage.setItem("tracks", JSON.stringify(tracks));
@@ -118,22 +141,30 @@
       const t = tracks[idx];
       if (!t) return;
       currentIdx = idx;
-      audio.src = `https://drive.google.com/uc?export=download&id=${t.id}`;
-      audio.play();
+      const url = `https://drive.google.com/uc?export=download&id=${t.id}`;
+      audio.src = url;
       document.getElementById("nowPlaying").innerText = "Сейчас играет: " + t.title;
       document.getElementById("coverImg").src = t.cover || "";
+      setStatus("запуск...");
+      audio.play().catch(e => {
+        setStatus("не удалось запустить: " + e.message);
+      });
     }
 
     function togglePlay() {
       if (!audio.src) return;
-      if (audio.paused) audio.play();
-      else audio.pause();
+      if (audio.paused) {
+        audio.play().catch(e => setStatus("ошибка play: " + e.message));
+      } else {
+        audio.pause();
+      }
     }
 
     function stopTrack() {
       audio.pause();
       audio.currentTime = 0;
       document.getElementById("nowPlaying").innerText = "Остановлено";
+      setStatus("остановлено");
     }
 
     function renderPlaylist() {
