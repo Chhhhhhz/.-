@@ -20,7 +20,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       - name: Prepare web app and Capacitor
         run: |
@@ -48,5 +48,3 @@ jobs:
         with:
           name: my-player-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
-
-
