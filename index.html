@@ -6,7 +6,6 @@
   <title>Плеер</title>
   <style>
     :root {
-      /* Основное меню */
       --bg: #262626;
       --bg-image: none;
       --border-color: #ffffff;
@@ -18,12 +17,10 @@
       --mini-bg: #1e1e1e;
       --nav-bg: #1c1c1c;
 
-      /* Окно плеера */
       --sheet-bg: #252525;
       --sheet-image: none;
       --sheet-border-color: #ffffff;
 
-      /* Общие цвета текста/иконок/подсветки */
       --icon-color: #ffffff;
       --text-color: #ffffff;
       --muted-text: #bdbdbd;
@@ -75,7 +72,6 @@
       display: block;
     }
 
-    /* Верхняя полоска / поиск */
     .top-bar {
       display: flex;
       align-items: center;
@@ -123,7 +119,6 @@
       margin: 0;
     }
 
-    /* Центральный круг плеера */
     .player-stage {
       display: flex;
       flex-direction: column;
@@ -226,7 +221,6 @@
       min-height: 16px;
     }
 
-    /* Недавние плейлисты */
     .recent-playlists-box {
       border: 1.5px solid var(--border-color);
       border-radius: 16px;
@@ -271,7 +265,6 @@
       text-overflow: ellipsis;
     }
 
-    /* Списки треков и плейлистов */
     .list-card {
       border: 1.5px solid var(--border-color);
       border-radius: 12px;
@@ -329,7 +322,6 @@
       margin-top: 2px;
     }
 
-    /* Мини-плеер над нижней панелью */
     .mini-player {
       position: fixed;
       left: 10px;
@@ -383,7 +375,6 @@
       flex-shrink: 0;
     }
 
-    /* Нижняя панель из 4 вкладок */
     .bottom-nav {
       position: fixed;
       left: 0;
@@ -432,7 +423,6 @@
       object-fit: contain;
     }
 
-    /* Полноэкранное окно переключения музыки (выплывает снизу) */
     .now-playing-sheet {
       position: fixed;
       inset: 0;
@@ -856,6 +846,12 @@
       cursor: pointer;
     }
 
+    .btn-danger {
+      border-color: #ff8a8a;
+      color: #ffb8b8;
+      background: rgba(255, 80, 80, 0.14);
+    }
+
     .btn:active {
       transform: scale(0.98);
     }
@@ -1053,8 +1049,9 @@
       <div class="panel">
         <h3>ИМПОРТ ПЕСЕН</h3>
         <div class="field-row">
-          <label>Массовый импорт (ссылки или ID с Google Диска, опционально «Автор - Название»)</label>
-          <textarea id="bulkImportInput" placeholder="Примеры строк:&#10;Исполнитель - Название трека | 1AQvIrnsDA2AImm8FBkkRuACcin9Pt1EC&#10;https://drive.google.com/file/d/1AQvIrnsDA2AImm8FBkkRuACcin9Pt1EC/view"></textarea>
+          <label>Массовый импорт (каждая строка — отдельный трек: «Исполнитель - Название | ID или ссылка»)</label>
+          <textarea id="bulkImportInput" placeholder="Примеры строк:&#10;Исполнитель - Название трека | 1AQvIrnsDA2AImm8FBkkRuACcin9Pt1EC&#10;Исполнитель 2 - Песня 2 https://drive.google.com/file/d/ID2/view&#10;ID3"></textarea>
+          <div class="hint">Пустые строки игнорируются. Если есть «Исполнитель - Название», они разложатся по полям; если нет — название возьмётся из текста рядом или подставится «Трек №».</div>
         </div>
         <button type="button" class="btn" onclick="importBulkTracks()">Импортировать песни</button>
 
@@ -1062,7 +1059,7 @@
 
         <div class="field-row">
           <label>Добавить один трек вручную</label>
-          <input id="singleTitle" type="text" placeholder="Название трека" />
+          <input id="singleTitle" type="text" placeholder="Название трека (или «Исполнитель - Название»)" />
         </div>
         <div class="field-row">
           <input id="singleArtist" type="text" placeholder="Исполнитель (необязательно)" />
@@ -1168,7 +1165,6 @@
       <div></div>
     </div>
 
-    <!-- ОКНО ТЕКСТА ПЕСНИ ПОВЕРХ ПЛЕЕРА -->
     <div id="lyricsOverlay" class="lyrics-overlay">
       <div class="section-header" style="margin-bottom:8px;">
         <h3 id="lyricsTrackHeading" class="section-title">Текст песни</h3>
@@ -1195,6 +1191,7 @@
       <div class="field-inline" style="margin-bottom:12px;">
         <button type="button" class="btn-small" onclick="downloadCurrentTrackToDevice()">Скачать на устройство</button>
         <button type="button" class="btn-small" onclick="deleteCurrentTrackFromDevice()">Удалить с устройства</button>
+        <button type="button" class="btn-small btn-danger" onclick="deleteCurrentTrackCompletely()">Удалить песню</button>
       </div>
 
       <label class="checkbox-line">
@@ -1238,9 +1235,6 @@
   <audio id="audio" preload="auto"></audio>
 
   <script>
-    /* =========================================================================
-       БАЗОВЫЕ ИКОНКИ: заменяй строки в ICONS на свои <svg>...</svg> или <img src="...">
-       ========================================================================= */
     const ICONS = {
       home: `<svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5z"/></svg>`,
       search: `<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>`,
@@ -1323,8 +1317,8 @@
     let activeThemeId = localStorage.getItem("mp_active_theme") || "preset_1";
     let currentTheme = getThemeById(activeThemeId);
 
-    // Очередь и режимы воспроизведения
-    let queueTrackIndices = [];
+    // Очередь хранит ID треков (track.id), чтобы сдвиги массива tracks никогда не ломали выбор трека
+    let queueTrackIds = [];
     let queuePos = -1;
     let sourceLabel = "общее";
     let repeatQueue = false;
@@ -1332,11 +1326,11 @@
     let repeatOne = false;
     let isSeeking = false;
 
-    let currentTrackIdx = -1;
+    let currentTrackId = null;
     let currentBlobUrl = null;
     let editingPlaylistId = null;
+    let modalEditingTrackId = null;
 
-    // Оперативный кэш соседних треков (±3)
     const memoryBlobCache = new Map();
     const inflightDownloads = new Map();
 
@@ -1345,22 +1339,26 @@
       savePlaylists();
     }
 
-    function getDownloadedTrackIndices() {
-      const result = [];
-      tracks.forEach((t, idx) => {
-        if (isTrackOfflineSaved(t.driveId)) result.push(idx);
-      });
-      return result;
+    function findTrackIndexById(trackId) {
+      return tracks.findIndex(t => t.id === trackId);
+    }
+
+    function getTrackById(trackId) {
+      return tracks.find(t => t.id === trackId) || null;
+    }
+
+    function getDownloadedTrackIds() {
+      return tracks.filter(t => isTrackOfflineSaved(t.driveId)).map(t => t.id);
     }
 
     function getAllPlaylistsForUI() {
-      const dlCount = getDownloadedTrackIndices().length;
+      const dlIds = getDownloadedTrackIds();
       const dlPlaylist = {
         id: DOWNLOADED_PLAYLIST_ID,
         name: "Скачанные",
-        trackIds: tracks.filter(t => isTrackOfflineSaved(t.driveId)).map(t => t.id),
+        trackIds: dlIds,
         isVirtualDownloaded: true,
-        countOverride: dlCount
+        countOverride: dlIds.length
       };
       return [dlPlaylist, ...playlists];
     }
@@ -1543,29 +1541,44 @@
     function extractDriveId(raw) {
       const s = (raw || "").trim();
       if (!s) return "";
-      const m1 = s.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      const m1 = s.match(/\/d\/([a-zA-Z0-9_-]{10,})/);
       if (m1) return m1[1];
-      const m2 = s.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      const m2 = s.match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
       if (m2) return m2[1];
-      return s.split(/[/?#&]/)[0];
+      const m3 = s.match(/^([a-zA-Z0-9_-]{10,})$/);
+      if (m3) return m3[1];
+      return "";
     }
 
-    function parseTitleAndArtist(rawLabel) {
-      let clean = (rawLabel || "").trim()
+    function splitArtistAndTitle(rawLabel, fallbackIndex) {
+      const cleaned = String(rawLabel || "")
+        .replace(/^[\s|•\-–—]+|[\s|•\-–—]+$/g, "")
         .replace(/\.(mp3|m4a|ogg|wav|flac|opus)$/i, "")
         .replace(/_/g, " ")
         .trim();
-      if (!clean) {
-        return { title: "Без названия", artist: "Неизвестный исполнитель" };
-      }
-      const parts = clean.split(/\s+-\s+/);
-      if (parts.length >= 2) {
+
+      if (!cleaned) {
         return {
-          artist: parts[0].trim() || "Неизвестный исполнитель",
-          title: parts.slice(1).join(" - ").trim() || "Без названия"
+          artist: "Неизвестный исполнитель",
+          title: "Трек " + fallbackIndex
         };
       }
-      return { title: clean, artist: "Неизвестный исполнитель" };
+
+      // Разделяем по « - », « – » или « — » только если с обеих сторон есть текст
+      const dashMatch = cleaned.match(/^(.+?)\s+[-–—]\s+(.+)$/);
+      if (dashMatch) {
+        const artist = dashMatch[1].trim();
+        const title = dashMatch[2].trim();
+        return {
+          artist: artist || "Неизвестный исполнитель",
+          title: title || ("Трек " + fallbackIndex)
+        };
+      }
+
+      return {
+        artist: "Неизвестный исполнитель",
+        title: cleaned
+      };
     }
 
     function addSingleTrack() {
@@ -1575,15 +1588,26 @@
       const cover = document.getElementById("singleCover").value.trim();
 
       if (!driveId) {
-        alert("Укажи ID или ссылку на файл с Google Диска.");
+        alert("Укажи корректный ID или ссылку на файл с Google Диска.");
         return;
       }
 
-      const parsed = parseTitleAndArtist(rawTitle);
+      let finalArtist = rawArtist;
+      let finalTitle = rawTitle;
+
+      if (!finalArtist && rawTitle) {
+        const parsed = splitArtistAndTitle(rawTitle, tracks.length + 1);
+        finalArtist = parsed.artist;
+        finalTitle = parsed.title;
+      } else {
+        finalArtist = finalArtist || "Неизвестный исполнитель";
+        finalTitle = finalTitle || ("Трек " + (tracks.length + 1));
+      }
+
       tracks.push({
-        id: "trk_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
-        title: rawTitle ? (rawArtist ? rawTitle : parsed.title) : "Без названия",
-        artist: rawArtist || parsed.artist,
+        id: "trk_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
+        title: finalTitle,
+        artist: finalArtist,
         driveId,
         cover,
         lyrics: "",
@@ -1610,26 +1634,42 @@
       }
 
       let added = 0;
+      let skipped = 0;
+
       lines.forEach(line => {
         let labelPart = "";
-        let sourcePart = line;
+        let sourcePart = "";
 
         if (line.includes("|")) {
-          const splitPipe = line.split("|");
-          labelPart = splitPipe[0].trim();
-          sourcePart = splitPipe.slice(1).join("|").trim();
+          const idx = line.indexOf("|");
+          labelPart = line.slice(0, idx).trim();
+          sourcePart = line.slice(idx + 1).trim();
         } else {
-          const urlMatch = line.match(/(https?:\/\/\S+)/);
+          const urlMatch = line.match(/(https?:\/\/\S+)/i);
           if (urlMatch) {
             sourcePart = urlMatch[1];
             labelPart = line.replace(urlMatch[1], "").trim();
+          } else {
+            // Строка без ссылки: проверяем, есть ли ID на конце или сама строка это ID
+            const parts = line.split(/\s+/);
+            const lastToken = parts[parts.length - 1];
+            const possibleId = extractDriveId(lastToken);
+            if (possibleId && parts.length > 1) {
+              sourcePart = possibleId;
+              labelPart = parts.slice(0, -1).join(" ").trim();
+            } else {
+              sourcePart = line;
+            }
           }
         }
 
         const driveId = extractDriveId(sourcePart);
-        if (!driveId) return;
+        if (!driveId) {
+          skipped++;
+          return;
+        }
 
-        const parsed = parseTitleAndArtist(labelPart || ("Трек " + (tracks.length + 1)));
+        const parsed = splitArtistAndTitle(labelPart, tracks.length + 1);
         tracks.push({
           id: "trk_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
           title: parsed.title,
@@ -1644,7 +1684,7 @@
 
       saveTracks();
       document.getElementById("bulkImportInput").value = "";
-      alert("Импортировано треков: " + added);
+      alert(`Добавлено треков: ${added}` + (skipped ? `, пропущено некорректных строк: ${skipped}` : ""));
     }
 
     function saveTracks() {
@@ -1659,9 +1699,6 @@
       renderPlaylistsScreen();
     }
 
-    /* =========================================================================
-       ОФЛАЙН-КЭШ НА УСТРОЙСТВЕ (Cache Storage)
-       ========================================================================= */
     function offlineRequestKey(driveId) {
       return `https://local-offline-audio.invalid/track/${encodeURIComponent(driveId)}`;
     }
@@ -1746,9 +1783,6 @@
       alert("Все офлайн-треки удалены с устройства.");
     }
 
-    /* =========================================================================
-       ЗАГРУЗКА ПОТОКА И ПРЕДЗАГРУЗКА ±3 ТРЕКОВ ИЗ ОЧЕРЕДИ
-       ========================================================================= */
     async function fetchRemoteAudioBlob(driveId) {
       if (inflightDownloads.has(driveId)) {
         return inflightDownloads.get(driveId);
@@ -1808,7 +1842,7 @@
 
     function getNeighborDriveIds(centerPos, radius = 3) {
       const set = new Set();
-      const len = queueTrackIndices.length;
+      const len = queueTrackIds.length;
       if (!len || centerPos < 0) return set;
 
       for (let step = -radius; step <= radius; step++) {
@@ -1821,8 +1855,7 @@
             continue;
           }
         }
-        const tIdx = queueTrackIndices[targetPos];
-        const trk = tracks[tIdx];
+        const trk = getTrackById(queueTrackIds[targetPos]);
         if (trk && trk.driveId) {
           set.add(trk.driveId);
         }
@@ -1832,7 +1865,8 @@
 
     async function prefetchNeighbors(centerPos) {
       const keepIds = getNeighborDriveIds(centerPos, 3);
-      const currentDriveId = currentTrackIdx >= 0 && tracks[currentTrackIdx] ? tracks[currentTrackIdx].driveId : null;
+      const curTrk = currentTrackId ? getTrackById(currentTrackId) : null;
+      const currentDriveId = curTrk ? curTrk.driveId : null;
 
       for (const [id, entry] of memoryBlobCache.entries()) {
         if (id !== currentDriveId && !keepIds.has(id)) {
@@ -1854,9 +1888,6 @@
       }
     }
 
-    /* =========================================================================
-       MEDIA SESSION (ПОДСКАЗКИ ДЛЯ ШТОРКИ УВЕДОМЛЕНИЙ ANDROID)
-       ========================================================================= */
     function updateMediaSession(trk) {
       if (!("mediaSession" in navigator) || !trk) return;
       try {
@@ -1879,15 +1910,9 @@
       } catch (e) {}
     }
 
-    /* =========================================================================
-       ОЧЕРЕДЬ И ВОСПРОИЗВЕДЕНИЕ
-       ========================================================================= */
-    function buildGeneralQueue() {
-      const indices = [];
-      tracks.forEach((t, i) => {
-        if (t.includeInGeneral !== false) indices.push(i);
-      });
-      return shuffleInfinite ? shuffleArray(indices) : indices;
+    function buildGeneralQueueIds() {
+      const ids = tracks.filter(t => t.includeInGeneral !== false).map(t => t.id);
+      return shuffleInfinite ? shuffleArray(ids) : ids;
     }
 
     function shuffleArray(arr) {
@@ -1900,14 +1925,14 @@
     }
 
     function onMainCircleClick() {
-      const generalIndices = buildGeneralQueue();
-      if (!generalIndices.length) {
+      const generalIds = buildGeneralQueueIds();
+      if (!generalIds.length) {
         setPlayerStatus("В общей очереди пока нет треков");
         return;
       }
-      if (!queueTrackIndices.length || sourceLabel !== "общее") {
+      if (!queueTrackIds.length || sourceLabel !== "общее") {
         sourceLabel = "общее";
-        queueTrackIndices = generalIndices;
+        queueTrackIds = generalIds;
         playQueuePos(0);
         return;
       }
@@ -1916,24 +1941,22 @@
 
     function playPlaylistById(plId) {
       if (plId === DOWNLOADED_PLAYLIST_ID) {
-        const dlIndices = getDownloadedTrackIndices();
-        if (!dlIndices.length) {
+        const dlIds = getDownloadedTrackIds();
+        if (!dlIds.length) {
           alert("Пока нет скачанных на устройство треков.");
           return;
         }
         sourceLabel = "Скачанные";
-        queueTrackIndices = shuffleInfinite ? shuffleArray(dlIndices) : dlIndices;
+        queueTrackIds = shuffleInfinite ? shuffleArray(dlIds) : dlIds;
         playQueuePos(0);
         return;
       }
 
       const pl = playlists.find(p => p.id === plId);
       if (!pl) return;
-      const indices = pl.trackIds
-        .map(tid => tracks.findIndex(t => t.id === tid))
-        .filter(idx => idx >= 0);
+      const validIds = pl.trackIds.filter(tid => !!getTrackById(tid));
 
-      if (!indices.length) {
+      if (!validIds.length) {
         openPlaylistEditor(pl.id);
         switchTab("search-playlists");
         alert("В плейлисте пока нет треков — добавь их ниже.");
@@ -1941,43 +1964,44 @@
       }
 
       sourceLabel = pl.name;
-      queueTrackIndices = shuffleInfinite ? shuffleArray(indices) : indices;
+      queueTrackIds = shuffleInfinite ? shuffleArray(validIds) : validIds;
       playQueuePos(0);
     }
 
-    function playTrackFromGeneral(trackIdx) {
-      const trk = tracks[trackIdx];
+    function playTrackFromGeneralById(trackId) {
+      const trk = getTrackById(trackId);
       if (!trk) return;
       sourceLabel = "общее";
-      const base = buildGeneralQueue();
-      if (!base.includes(trackIdx)) {
-        base.unshift(trackIdx);
+      const base = buildGeneralQueueIds();
+      if (!base.includes(trackId)) {
+        base.unshift(trackId);
+      } else {
+        const idx = base.indexOf(trackId);
+        if (idx > 0) {
+          base.splice(idx, 1);
+          base.unshift(trackId);
+        }
       }
-      const pos = base.indexOf(trackIdx);
-      if (pos > 0) {
-        base.splice(pos, 1);
-        base.unshift(trackIdx);
-      }
-      queueTrackIndices = base;
+      queueTrackIds = base;
       playQueuePos(0);
     }
 
-    function playTrackFromCurrentSource(trackIdx) {
-      if (!tracks[trackIdx]) return;
-      if (queueTrackIndices.includes(trackIdx)) {
-        const targetPos = queueTrackIndices.indexOf(trackIdx);
-        playQueuePos(targetPos);
+    function playTrackFromCurrentSourceById(trackId) {
+      if (!getTrackById(trackId)) return;
+      const existingPos = queueTrackIds.indexOf(trackId);
+      if (existingPos >= 0) {
+        playQueuePos(existingPos);
       } else {
-        playTrackFromGeneral(trackIdx);
+        playTrackFromGeneralById(trackId);
       }
     }
 
     async function playQueuePos(pos) {
-      if (!queueTrackIndices.length) return;
-      if (pos < 0) pos = queueTrackIndices.length - 1;
-      if (pos >= queueTrackIndices.length) {
+      if (!queueTrackIds.length) return;
+      if (pos < 0) pos = queueTrackIds.length - 1;
+      if (pos >= queueTrackIds.length) {
         if (shuffleInfinite) {
-          queueTrackIndices = shuffleArray(queueTrackIndices);
+          queueTrackIds = shuffleArray(queueTrackIds);
           pos = 0;
         } else if (repeatQueue) {
           pos = 0;
@@ -1990,11 +2014,15 @@
       }
 
       queuePos = pos;
-      const idx = queueTrackIndices[queuePos];
-      const trk = tracks[idx];
-      if (!trk) return;
+      const tid = queueTrackIds[queuePos];
+      const trk = getTrackById(tid);
+      if (!trk) {
+        queueTrackIds = queueTrackIds.filter(id => id !== tid);
+        if (queueTrackIds.length) playQueuePos(Math.min(queuePos, queueTrackIds.length - 1));
+        return;
+      }
 
-      currentTrackIdx = idx;
+      currentTrackId = trk.id;
       syncTrackEverywhere(trk);
       updateMediaSession(trk);
       setPlayerStatus(isTrackOfflineSaved(trk.driveId) ? "Запуск с устройства..." : "Загрузка...");
@@ -2031,10 +2059,11 @@
 
     function togglePlay() {
       if (!audio.src) {
-        if (tracks.length > 0) {
-          if (!queueTrackIndices.length) {
+        const generalIds = buildGeneralQueueIds();
+        if (generalIds.length > 0) {
+          if (!queueTrackIds.length) {
             sourceLabel = "общее";
-            queueTrackIndices = buildGeneralQueue();
+            queueTrackIds = generalIds;
           }
           playQueuePos(queuePos >= 0 ? queuePos : 0);
         } else {
@@ -2048,26 +2077,28 @@
           setPlayerStatus("Играет");
           renderPlayerRing();
           updateAllPlayGlyphs();
-          if (tracks[currentTrackIdx]) updateMediaSession(tracks[currentTrackIdx]);
+          const trk = currentTrackId ? getTrackById(currentTrackId) : null;
+          if (trk) updateMediaSession(trk);
         });
       } else {
         audio.pause();
         setPlayerStatus("Пауза");
         renderPlayerRing();
         updateAllPlayGlyphs();
-        if (tracks[currentTrackIdx]) updateMediaSession(tracks[currentTrackIdx]);
+        const trk = currentTrackId ? getTrackById(currentTrackId) : null;
+        if (trk) updateMediaSession(trk);
       }
     }
 
     function prevTrack() {
-      if (!queueTrackIndices.length) return;
+      if (!queueTrackIds.length) return;
       playQueuePos(queuePos - 1);
     }
 
     function nextTrack() {
-      if (!queueTrackIndices.length) return;
-      if (shuffleInfinite && queuePos + 1 >= queueTrackIndices.length) {
-        queueTrackIndices = shuffleArray(queueTrackIndices);
+      if (!queueTrackIds.length) return;
+      if (shuffleInfinite && queuePos + 1 >= queueTrackIds.length) {
+        queueTrackIds = shuffleArray(queueTrackIds);
         playQueuePos(0);
       } else {
         playQueuePos(queuePos + 1);
@@ -2124,12 +2155,11 @@
 
     function toggleShuffleInfinite() {
       shuffleInfinite = !shuffleInfinite;
-      if (queueTrackIndices.length > 0 && currentTrackIdx >= 0) {
-        const current = currentTrackIdx;
-        queueTrackIndices = shuffleInfinite
-          ? shuffleArray(queueTrackIndices)
-          : queueTrackIndices.slice().sort((a, b) => a - b);
-        const newPos = queueTrackIndices.indexOf(current);
+      if (queueTrackIds.length > 0 && currentTrackId) {
+        queueTrackIds = shuffleInfinite
+          ? shuffleArray(queueTrackIds)
+          : queueTrackIds.filter(id => !!getTrackById(id));
+        const newPos = queueTrackIds.indexOf(currentTrackId);
         queuePos = newPos >= 0 ? newPos : 0;
       }
       updateModeButtonsUI();
@@ -2194,17 +2224,15 @@
       document.getElementById("sheetPlayGlyph").textContent = glyph;
     }
 
-    /* =========================================================================
-       ОКНО ПЛЕЕРА, СВАЙП ВНИЗ, ТЕКСТ И КАРАНДАШИК
-       ========================================================================= */
     const sheetEl = document.getElementById("nowPlayingSheet");
     const dragHandleEl = document.getElementById("sheetDragHandle");
     let dragStartY = null;
     let dragDeltaY = 0;
 
     function openNowPlayingSheet() {
-      if (currentTrackIdx >= 0 && tracks[currentTrackIdx]) {
-        syncTrackEverywhere(tracks[currentTrackIdx]);
+      const trk = currentTrackId ? getTrackById(currentTrackId) : tracks[0];
+      if (trk) {
+        syncTrackEverywhere(trk);
       } else {
         document.getElementById("sheetSourceTitle").textContent = sourceLabel || "общее";
       }
@@ -2256,14 +2284,14 @@
       openBtn.classList.toggle("active", nextState);
     }
 
-    function openEditCurrentTrackModal() {
-      const idx = currentTrackIdx >= 0 ? currentTrackIdx : 0;
-      const trk = tracks[idx];
+    function openEditCurrentTrackModal(explicitTrackId = null) {
+      const targetId = explicitTrackId || currentTrackId || (tracks[0] && tracks[0].id);
+      const trk = targetId ? getTrackById(targetId) : null;
       if (!trk) {
         alert("Сначала выбери или добавь трек.");
         return;
       }
-      currentTrackIdx = idx;
+      modalEditingTrackId = trk.id;
       document.getElementById("editIncludeInGeneralInput").checked = trk.includeInGeneral !== false;
       document.getElementById("editTitleInput").value = trk.title || "";
       document.getElementById("editArtistInput").value = trk.artist || "";
@@ -2293,11 +2321,12 @@
     }
 
     function closeEditTrackModal() {
+      modalEditingTrackId = null;
       document.getElementById("editTrackModal").classList.remove("open");
     }
 
     function updateEditOfflineStatusUI() {
-      const trk = tracks[currentTrackIdx];
+      const trk = modalEditingTrackId ? getTrackById(modalEditingTrackId) : null;
       const el = document.getElementById("editOfflineStatus");
       if (!el || !trk) return;
       el.textContent = isTrackOfflineSaved(trk.driveId)
@@ -2306,7 +2335,7 @@
     }
 
     async function downloadCurrentTrackToDevice() {
-      const trk = tracks[currentTrackIdx];
+      const trk = modalEditingTrackId ? getTrackById(modalEditingTrackId) : null;
       if (!trk) return;
       document.getElementById("editOfflineStatus").textContent = "На устройстве: скачивается...";
       const ok = await downloadTrackToDevice(trk);
@@ -2319,10 +2348,61 @@
     }
 
     async function deleteCurrentTrackFromDevice() {
-      const trk = tracks[currentTrackIdx];
+      const trk = modalEditingTrackId ? getTrackById(modalEditingTrackId) : null;
       if (!trk) return;
       await deleteTrackFromDevice(trk.driveId);
       alert("Локальная копия удалена, трек остался на Google Диске.");
+    }
+
+    async function deleteCurrentTrackCompletely() {
+      const trk = modalEditingTrackId ? getTrackById(modalEditingTrackId) : null;
+      if (!trk) return;
+      if (!confirm(`Удалить песню «${trk.title}» из плеера полностью?`)) return;
+
+      const deletedId = trk.id;
+      const deletedDriveId = trk.driveId;
+
+      if (isTrackOfflineSaved(deletedDriveId)) {
+        await deleteTrackFromDevice(deletedDriveId);
+      }
+
+      if (memoryBlobCache.has(deletedDriveId)) {
+        const entry = memoryBlobCache.get(deletedDriveId);
+        if (entry.url && entry.url !== currentBlobUrl) URL.revokeObjectURL(entry.url);
+        memoryBlobCache.delete(deletedDriveId);
+      }
+
+      tracks = tracks.filter(t => t.id !== deletedId);
+      playlists.forEach(pl => {
+        pl.trackIds = pl.trackIds.filter(id => id !== deletedId);
+      });
+
+      const wasPlayingDeleted = currentTrackId === deletedId;
+      queueTrackIds = queueTrackIds.filter(id => id !== deletedId);
+
+      savePlaylists();
+      saveTracks();
+      closeEditTrackModal();
+
+      if (wasPlayingDeleted) {
+        audio.pause();
+        if (currentBlobUrl) {
+          URL.revokeObjectURL(currentBlobUrl);
+          currentBlobUrl = null;
+        }
+        audio.removeAttribute("src");
+        audio.load();
+        currentTrackId = null;
+        document.getElementById("miniTitle").textContent = "Название песни";
+        document.getElementById("miniArtist").textContent = "Исполнитель";
+        document.getElementById("miniCoverBox").textContent = "♪";
+        document.getElementById("sheetTitleBox").textContent = "Название песни";
+        document.getElementById("sheetArtistBox").textContent = "Исполнитель";
+        document.getElementById("sheetCoverBox").textContent = "♪";
+        setPlayerStatus("Песня удалена");
+        renderPlayerRing();
+        updateAllPlayGlyphs();
+      }
     }
 
     function handleCoverFileUpload(event) {
@@ -2355,7 +2435,7 @@
     }
 
     function saveEditedTrack() {
-      const trk = tracks[currentTrackIdx];
+      const trk = modalEditingTrackId ? getTrackById(modalEditingTrackId) : null;
       if (!trk) return;
       trk.includeInGeneral = document.getElementById("editIncludeInGeneralInput").checked;
       trk.title = document.getElementById("editTitleInput").value.trim() || "Без названия";
@@ -2376,44 +2456,45 @@
 
       savePlaylists();
       saveTracks();
-      syncTrackEverywhere(trk);
+      if (currentTrackId === trk.id) {
+        syncTrackEverywhere(trk);
+        updateMediaSession(trk);
+      }
       closeEditTrackModal();
     }
 
-    /* =========================================================================
-       СПИСКИ ПЕСЕН И ПЛЕЙЛИСТОВ
-       ========================================================================= */
     function renderSongsList() {
       const q = (document.getElementById("songSearchInput").value || "").trim().toLowerCase();
       const container = document.getElementById("songsSearchList");
       container.innerHTML = "";
 
-      const filtered = tracks
-        .map((t, idx) => ({ t, idx }))
-        .filter(({ t }) =>
-          t.includeInGeneral !== false &&
-          ((t.title || "").toLowerCase().includes(q) ||
-          (t.artist || "").toLowerCase().includes(q))
-        );
+      const filtered = tracks.filter(t =>
+        t.includeInGeneral !== false &&
+        ((t.title || "").toLowerCase().includes(q) ||
+        (t.artist || "").toLowerCase().includes(q))
+      );
 
       if (!filtered.length) {
         container.innerHTML = `<div class="hint">Треков в общей очереди не найдено. Добавить их можно в Настройках, а треки только для плейлистов запускаются из самих плейлистов.</div>`;
         return;
       }
 
-      filtered.forEach(({ t, idx }) => {
+      filtered.forEach(t => {
         const card = document.createElement("div");
         card.className = "list-card";
         const offlineBadge = isTrackOfflineSaved(t.driveId) ? " • офлайн" : "";
         card.innerHTML = `
-          <div class="list-card-main" onclick="playTrackFromGeneral(${idx})">
+          <div class="list-card-main" onclick="playTrackFromGeneralById('${escapeAttr(t.id)}')">
             <div class="thumb-square">${t.cover ? `<img src="${escapeAttr(t.cover)}" style="width:100%;height:100%;object-fit:cover;border-radius:7px;" />` : "♪"}</div>
             <div class="meta-texts">
               <div class="meta-title">${escapeHtml(t.title)}</div>
               <div class="meta-sub">${escapeHtml(t.artist)}${offlineBadge}</div>
             </div>
           </div>
-          <button type="button" class="btn-small" onclick="playTrackFromGeneral(${idx})">▶</button>
+          <div class="field-inline">
+            <button type="button" class="btn-small" onclick="openEditCurrentTrackModal('${escapeAttr(t.id)}')" aria-label="Редактировать">✎</button>
+            <button type="button" class="btn-small" onclick="playTrackFromGeneralById('${escapeAttr(t.id)}')" aria-label="Играть">▶</button>
+          </div>
         `;
         container.appendChild(card);
       });
@@ -2501,8 +2582,8 @@
       panel.style.display = "block";
 
       const insideTracks = pl.trackIds
-        .map(tid => ({ tid, trk: tracks.find(t => t.id === tid), idx: tracks.findIndex(t => t.id === tid) }))
-        .filter(item => !!item.trk);
+        .map(tid => getTrackById(tid))
+        .filter(Boolean);
 
       const availableTracks = tracks.filter(t => !pl.trackIds.includes(t.id));
 
@@ -2512,9 +2593,9 @@
           <button type="button" class="btn-small" onclick="editingPlaylistId=null;document.getElementById('playlistEditorPanel').style.display='none';">Закрыть</button>
         </div>
         <div class="hint" style="margin-bottom:8px;">Треки в плейлисте:</div>
-        ${insideTracks.length ? insideTracks.map(({ trk, idx }) => `
+        ${insideTracks.length ? insideTracks.map(trk => `
           <div class="list-card">
-            <div class="meta-texts" onclick="playTrackFromCurrentSource(${idx})" style="cursor:pointer;">
+            <div class="meta-texts" onclick="playTrackFromCurrentSourceById('${escapeAttr(trk.id)}')" style="cursor:pointer;">
               <div class="meta-title">${escapeHtml(trk.title)}</div>
               <div class="meta-sub">${escapeHtml(trk.artist)}</div>
             </div>
@@ -2561,7 +2642,6 @@
       return String(str || "").replace(/"/g, "&quot;");
     }
 
-    // Старт
     applyStaticIcons();
     applyThemeObject(currentTheme);
     renderRecentPlaylists();
