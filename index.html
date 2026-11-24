@@ -21,6 +21,8 @@
       --nav-bg: #1c1c1c;
       --active-icon-bg: rgba(255, 255, 255, 0.22);
       --active-icon-image: none;
+      --sheet-bg: #252525;
+      --sheet-image: none;
     }
 
     * {
@@ -335,6 +337,7 @@
       gap: 10px;
       min-width: 0;
       flex: 1;
+      cursor: pointer;
     }
 
     .mini-cover {
@@ -411,6 +414,343 @@
       z-index: 1;
     }
 
+    /* Полноэкранное окно переключения музыки (выплывает снизу) */
+    .now-playing-sheet {
+      position: fixed;
+      inset: 0;
+      background-color: var(--sheet-bg);
+      background-image: var(--sheet-image);
+      background-size: cover;
+      background-position: center;
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 10px 18px 20px;
+      transform: translateY(100%);
+      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+      pointer-events: none;
+      overflow-y: auto;
+    }
+
+    .now-playing-sheet.open {
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .now-playing-sheet.dragging {
+      transition: none;
+    }
+
+    .sheet-handle-bar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 4px 0 8px;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .sheet-grab-pill {
+      width: 44px;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--border-color);
+      opacity: 0.7;
+      margin-bottom: 6px;
+    }
+
+    .sheet-source-label {
+      font-size: 13px;
+      color: var(--muted-text);
+      letter-spacing: 0.4px;
+      text-align: center;
+    }
+
+    .sheet-top-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 4px;
+    }
+
+    .icon-action-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border-color);
+      background: rgba(0, 0, 0, 0.32);
+      color: var(--icon-color);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .icon-action-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--icon-color);
+      fill: none;
+      stroke-width: 1.9;
+    }
+
+    .artwork-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 340px;
+      margin: 0 auto;
+    }
+
+    .artwork-box {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 18px;
+      border: 1.5px solid var(--border-color);
+      background: rgba(255, 255, 255, 0.06);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 56px;
+    }
+
+    .artwork-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Название слегка перекрывает нижний край обложки верхними буквами */
+    .track-title-overlap {
+      position: relative;
+      z-index: 3;
+      margin-top: -15px;
+      padding: 0 2px;
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1.15;
+      color: var(--text-color);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85);
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .marquee-box {
+      display: flex;
+      width: max-content;
+      animation: marqueeLoop 12s linear infinite;
+    }
+
+    .marquee-box span {
+      padding-right: 36px;
+    }
+
+    @keyframes marqueeLoop {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .track-artist-line {
+      font-size: 15px;
+      color: var(--muted-text);
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .scrubber-block {
+      margin-top: 14px;
+    }
+
+    input[type="range"].scrubber {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.25);
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"].scrubber::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 22px;
+      border-radius: 999px;
+      background: var(--text-color);
+      border: 1px solid rgba(0, 0, 0, 0.5);
+      cursor: pointer;
+    }
+
+    .time-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted-text);
+      margin-top: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .main-transport-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 10px 0 8px;
+      padding: 0 8px;
+    }
+
+    .transport-side-btn {
+      width: 58px;
+      height: 58px;
+      border-radius: 16px;
+      border: 1.5px solid var(--border-color);
+      background: rgba(0, 0, 0, 0.25);
+      color: var(--icon-color);
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .transport-play-btn {
+      width: 82px;
+      height: 82px;
+      border-radius: 22px;
+      border: 2px solid var(--border-color);
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--icon-color);
+      font-size: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .modes-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      margin: 6px 0 10px;
+    }
+
+    .mode-btn {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      border: 1.5px solid transparent;
+      background: transparent;
+      color: var(--icon-color);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      font-size: 18px;
+      opacity: 0.72;
+    }
+
+    .mode-btn.active {
+      opacity: 1;
+      border-color: var(--border-color);
+      background-color: var(--active-icon-bg);
+      background-image: var(--active-icon-image);
+      background-size: cover;
+      background-position: center;
+    }
+
+    .sheet-bottom-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 6px;
+    }
+
+    .lyrics-letter-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border-color);
+      background: rgba(0, 0, 0, 0.3);
+      color: var(--text-color);
+      font-size: 20px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 60;
+    }
+
+    .lyrics-letter-btn.active {
+      background: var(--text-color);
+      color: var(--bg);
+    }
+
+    /* Оверлей текста песни внутри окна плеера */
+    .lyrics-overlay {
+      position: fixed;
+      inset: 0;
+      background-color: var(--sheet-bg);
+      background-image: var(--sheet-image);
+      background-size: cover;
+      background-position: center;
+      z-index: 50;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 20px 18px 20px;
+    }
+
+    .lyrics-overlay.open {
+      display: flex;
+    }
+
+    .lyrics-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 4px 16px;
+      white-space: pre-wrap;
+      font-size: 18px;
+      line-height: 1.55;
+      color: var(--text-color);
+    }
+
+    /* Модальное окно редактирования трека (карандашик) */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      z-index: 70;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 420px;
+      max-height: 88vh;
+      overflow-y: auto;
+      border-radius: 16px;
+      border: 1.5px solid var(--border-color);
+      background: var(--bg);
+      color: var(--text-color);
+      padding: 14px;
+    }
+
     /* Настройки и формы */
     .panel {
       border: 1.5px solid var(--border-color);
@@ -482,10 +822,6 @@
       cursor: pointer;
     }
 
-    .btn:active {
-      transform: scale(0.98);
-    }
-
     .btn-small {
       padding: 5px 9px;
       font-size: 12px;
@@ -511,9 +847,6 @@
       color: var(--text-color);
       font-size: 12px;
       cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
     }
 
     .theme-chip.active {
@@ -619,7 +952,7 @@
         </div>
 
         <div class="field-row">
-          <label>Цвет фона экрана</label>
+          <label>Цвет фона экрана и окна плеера (или ссылка на картинку)</label>
           <div class="field-inline">
             <input id="cfgBgColor" type="color" oninput="updateThemeFromInputs()" />
             <input id="cfgBgImage" type="url" placeholder="Ссылка на картинку фона (или пусто)" oninput="updateThemeFromInputs()" />
@@ -627,8 +960,9 @@
         </div>
 
         <div class="field-row">
-          <label>Цвет верхней полоски</label>
+          <label>Цвет текста и цвет верхней полоски</label>
           <div class="field-inline">
+            <input id="cfgTextColor" type="color" oninput="updateThemeFromInputs()" />
             <input id="cfgTopbarColor" type="color" oninput="updateThemeFromInputs()" />
           </div>
         </div>
@@ -642,7 +976,7 @@
         </div>
 
         <div class="field-row">
-          <label>Подсветка активной иконки внизу (цвет или картинка)</label>
+          <label>Подсветка активной иконки / режимов (цвет или картинка)</label>
           <div class="field-inline">
             <input id="cfgActiveIconColor" type="color" oninput="updateThemeFromInputs()" />
             <input id="cfgActiveIconImage" type="url" placeholder="Ссылка на картинку подсветки (или пусто)" oninput="updateThemeFromInputs()" />
@@ -671,7 +1005,6 @@
         <div class="field-row">
           <label>Массовый импорт (ссылки или ID с Google Диска, опционально «Автор - Название»)</label>
           <textarea id="bulkImportInput" placeholder="Примеры строк:&#10;Исполнитель - Название трека | 1AQvIrnsDA2AImm8FBkkRuACcin9Pt1EC&#10;https://drive.google.com/file/d/1AQvIrnsDA2AImm8FBkkRuACcin9Pt1EC/view"></textarea>
-          <div class="hint">Если имя файла/строки содержит « - », автор и название подставятся сами — и их можно будет поправить в списке.</div>
         </div>
         <button class="btn" onclick="importBulkTracks()">Импортировать песни</button>
 
@@ -697,7 +1030,7 @@
 
   <!-- МИНИ-ПЛЕЕР -->
   <div class="mini-player">
-    <div class="mini-left">
+    <div class="mini-left" onclick="openNowPlayingSheet()">
       <div id="miniCoverBox" class="mini-cover">♪</div>
       <div class="meta-texts">
         <div id="miniTitle" class="meta-title">Название песни</div>
@@ -725,6 +1058,106 @@
     </button>
   </nav>
 
+  <!-- ПОЛНОЭКРАННОЕ ОКНО ПЕРЕКЛЮЧЕНИЯ МУЗЫКИ -->
+  <div id="nowPlayingSheet" class="now-playing-sheet">
+    <div>
+      <div id="sheetDragHandle" class="sheet-handle-bar" onclick="closeNowPlayingSheet()">
+        <div class="sheet-grab-pill"></div>
+        <div id="sheetSourceTitle" class="sheet-source-label">общее</div>
+      </div>
+
+      <div class="sheet-top-actions">
+        <button class="icon-action-btn" onclick="openEditCurrentTrackModal()" aria-label="Редактировать трек">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 20h9"/>
+            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="artwork-wrap">
+        <div id="sheetCoverBox" class="artwork-box">♪</div>
+        <div id="sheetTitleBox" class="track-title-overlap">Название песни</div>
+        <div id="sheetArtistBox" class="track-artist-line">Исполнитель</div>
+      </div>
+
+      <div class="scrubber-block">
+        <input id="seekSlider" class="scrubber" type="range" min="0" max="1000" value="0" oninput="onSeekInput()" onchange="onSeekCommit()" />
+        <div class="time-row">
+          <span id="timeCurrent">00:00</span>
+          <span id="timeTotal">00:00</span>
+        </div>
+      </div>
+
+      <div class="main-transport-row">
+        <button class="transport-side-btn" onclick="prevTrack()" aria-label="Предыдущий трек">⏮</button>
+        <button class="transport-play-btn" onclick="togglePlay()" aria-label="Воспроизвести или пауза">
+          <span id="sheetPlayGlyph">▶</span>
+        </button>
+        <button class="transport-side-btn" onclick="nextTrack()" aria-label="Следующий трек">⏭</button>
+      </div>
+
+      <div class="modes-row">
+        <button id="btnRepeatQueue" class="mode-btn" onclick="toggleRepeatQueue()" title="Повтор очереди" aria-label="Повтор очереди">🔁</button>
+        <button id="btnShuffleInfinite" class="mode-btn" onclick="toggleShuffleInfinite()" title="Бесконечный разнобой" aria-label="Бесконечный разнобой">🔀</button>
+        <button id="btnRepeatOne" class="mode-btn" onclick="toggleRepeatOne()" title="Повтор текущего трека" aria-label="Повтор текущего трека">🔂</button>
+      </div>
+    </div>
+
+    <div class="sheet-bottom-bar">
+      <button id="btnOpenLyrics" class="lyrics-letter-btn" onclick="toggleLyricsOverlay()" aria-label="Текст песни">Т</button>
+      <div id="sheetStatusHint" class="hint" style="margin:0;">Потяни вверх за шторку, чтобы свернуть</div>
+    </div>
+
+    <!-- ОКНО ТЕКСТА ПЕСНИ ПОВЕРХ ПЛЕЕРА -->
+    <div id="lyricsOverlay" class="lyrics-overlay">
+      <div class="section-header" style="margin-bottom:8px;">
+        <h3 id="lyricsTrackHeading" class="section-title">Текст песни</h3>
+      </div>
+      <div id="lyricsContentBox" class="lyrics-scroll">Текст песни пока не добавлен. Нажми на карандашик сверху, чтобы вставить текст.</div>
+      <div class="sheet-bottom-bar">
+        <button id="btnCloseLyrics" class="lyrics-letter-btn active" onclick="toggleLyricsOverlay()" aria-label="Закрыть текст песни">Т</button>
+        <span class="hint">Нажми «Т», чтобы вернуться</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ ТРЕКА (КАРАНДАШИК) -->
+  <div id="editTrackModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="section-header">
+        <h3 style="margin:0;">Редактировать трек</h3>
+        <button class="btn-small" onclick="closeEditTrackModal()">✕</button>
+      </div>
+
+      <div class="field-row">
+        <label>Название песни</label>
+        <input id="editTitleInput" type="text" />
+      </div>
+
+      <div class="field-row">
+        <label>Исполнитель</label>
+        <input id="editArtistInput" type="text" />
+      </div>
+
+      <div class="field-row">
+        <label>Обложка (ссылка или файл с устройства)</label>
+        <input id="editCoverUrlInput" type="url" placeholder="https://..." />
+        <input id="editCoverFileInput" type="file" accept="image/*" style="margin-top:6px;font-size:12px;" onchange="handleCoverFileUpload(event)" />
+      </div>
+
+      <div class="field-row">
+        <label>Текст песни</label>
+        <textarea id="editLyricsInput" style="min-height:130px;" placeholder="Вставь сюда текст песни..."></textarea>
+      </div>
+
+      <div class="field-inline" style="justify-content:flex-end;margin-top:12px;">
+        <button class="btn" onclick="closeEditTrackModal()">Отмена</button>
+        <button class="btn" onclick="saveEditedTrack()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
   <audio id="audio" preload="auto"></audio>
 
   <script>
@@ -737,6 +1170,7 @@
         kaomoji: "^-^r",
         bgColor: "#2b2b2b",
         bgImage: "",
+        textColor: "#ffffff",
         topbarColor: "#383838",
         borderColor: "#ffffff",
         iconColor: "#ffffff",
@@ -755,6 +1189,7 @@
         kaomoji: "^-^r",
         bgColor: "#242424",
         bgImage: "",
+        textColor: "#ffffff",
         topbarColor: "#2f2f2f",
         borderColor: "#f5f5f5",
         iconColor: "#f5f5f5",
@@ -773,24 +1208,19 @@
     let customThemes = JSON.parse(localStorage.getItem("mp_custom_themes") || "[]");
     let activeThemeId = localStorage.getItem("mp_active_theme") || "preset_1";
     let currentTheme = getThemeById(activeThemeId);
+
+    // Очередь и режимы воспроизведения
+    let queueTrackIndices = [];
+    let queuePos = -1;
+    let sourceLabel = "общее";
+    let repeatQueue = false;
+    let shuffleInfinite = false;
+    let repeatOne = false;
+    let isSeeking = false;
+
     let currentTrackIdx = -1;
     let currentBlobUrl = null;
     let editingPlaylistId = null;
-
-    // Миграция старых треков из localStorage, если были
-    if (!tracks.length && localStorage.getItem("tracks")) {
-      try {
-        const legacy = JSON.parse(localStorage.getItem("tracks") || "[]");
-        tracks = legacy.map((t, i) => ({
-          id: "trk_" + Date.now() + "_" + i,
-          title: t.title || "Без названия",
-          artist: t.artist || "Неизвестный исполнитель",
-          driveId: t.id || "",
-          cover: t.cover || ""
-        })).filter(t => t.driveId);
-        saveTracks();
-      } catch (e) {}
-    }
 
     if (!playlists.length) {
       playlists = [{ id: "pl_default", name: "Избранное", trackIds: [] }];
@@ -811,21 +1241,28 @@
     function applyThemeObject(th) {
       currentTheme = { ...th };
       const root = document.documentElement;
-      root.style.setProperty("--bg", th.bgColor || "#262626");
-      root.style.setProperty("--bg-image", cssUrlOrNone(th.bgImage));
-      root.style.setProperty("--topbar-bg", th.topbarColor || "#323232");
+      const bgVal = th.bgColor || "#262626";
+      const bgImgVal = cssUrlOrNone(th.bgImage);
+
+      root.style.setProperty("--bg", bgVal);
+      root.style.setProperty("--bg-image", bgImgVal);
+      root.style.setProperty("--sheet-bg", bgVal);
+      root.style.setProperty("--sheet-image", bgImgVal);
+      root.style.setProperty("--text-color", th.textColor || "#ffffff");
+      root.style.setProperty("--topbar-bg", th.topbarColor || "#383838");
       root.style.setProperty("--border-color", th.borderColor || "#ffffff");
       root.style.setProperty("--icon-color", th.iconColor || "#ffffff");
-      root.style.setProperty("--circle-bg", th.circleColor || "#2e2e2e");
+      root.style.setProperty("--circle-bg", th.circleColor || "#343434");
       root.style.setProperty("--circle-image", cssUrlOrNone(th.circleImage));
-      root.style.setProperty("--playlists-bg", th.playlistsColor || "#3a3a3a");
+      root.style.setProperty("--playlists-bg", th.playlistsColor || "#464646");
       root.style.setProperty("--playlists-image", cssUrlOrNone(th.playlistsImage));
-      root.style.setProperty("--active-icon-bg", th.activeIconColor || "rgba(255,255,255,0.22)");
+      root.style.setProperty("--active-icon-bg", th.activeIconColor || "#666666");
       root.style.setProperty("--active-icon-image", cssUrlOrNone(th.activeIconImage));
 
       syncSettingsInputs(th);
       renderPlayerRing();
       renderThemesList();
+      updateModeButtonsUI();
     }
 
     function syncSettingsInputs(th) {
@@ -833,6 +1270,7 @@
       document.getElementById("cfgKaomoji").value = th.kaomoji || "^-^r";
       document.getElementById("cfgBgColor").value = th.bgColor || "#2b2b2b";
       document.getElementById("cfgBgImage").value = th.bgImage || "";
+      document.getElementById("cfgTextColor").value = th.textColor || "#ffffff";
       document.getElementById("cfgTopbarColor").value = th.topbarColor || "#383838";
       document.getElementById("cfgBorderColor").value = th.borderColor || "#ffffff";
       document.getElementById("cfgIconColor").value = th.iconColor || "#ffffff";
@@ -851,6 +1289,7 @@
         kaomoji: document.getElementById("cfgKaomoji").value.trim() || "^-^r",
         bgColor: document.getElementById("cfgBgColor").value,
         bgImage: document.getElementById("cfgBgImage").value.trim(),
+        textColor: document.getElementById("cfgTextColor").value,
         topbarColor: document.getElementById("cfgTopbarColor").value,
         borderColor: document.getElementById("cfgBorderColor").value,
         iconColor: document.getElementById("cfgIconColor").value,
@@ -913,7 +1352,7 @@
 
     function renderPlayerRing() {
       const container = document.getElementById("playerRingContainer");
-      const isPlaying = !audio.paused && audio.currentTime >= 0 && !!audio.src;
+      const isPlaying = !audio.paused && !!audio.src;
       const playSvg = isPlaying
         ? `<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>`
         : `<svg viewBox="0 0 24 24"><polygon points="7,5 20,12 7,19"/></svg>`;
@@ -923,14 +1362,14 @@
           <div class="outer-ring">
             <div class="ring-menu-label">МЕНЮ</div>
             <button class="ring-prev" onclick="prevTrack()" aria-label="Назад">◀◀</button>
-            <button class="main-play-circle ${isPlaying ? "playing" : ""}" onclick="togglePlay()" aria-label="Воспроизвести">${playSvg}</button>
+            <button class="main-play-circle ${isPlaying ? "playing" : ""}" onclick="onMainCircleClick()" aria-label="Воспроизвести">${playSvg}</button>
             <button class="ring-next" onclick="nextTrack()" aria-label="Вперёд">▶▶</button>
             <div class="ring-kaomoji">${escapeHtml(currentTheme.kaomoji || "^-^r")}</div>
           </div>
         `;
       } else {
         container.innerHTML = `
-          <button class="main-play-circle ${isPlaying ? "playing" : ""}" onclick="togglePlay()" aria-label="Воспроизвести">${playSvg}</button>
+          <button class="main-play-circle ${isPlaying ? "playing" : ""}" onclick="onMainCircleClick()" aria-label="Воспроизвести">${playSvg}</button>
         `;
       }
     }
@@ -994,7 +1433,8 @@
         title: rawTitle ? (rawArtist ? rawTitle : parsed.title) : "Без названия",
         artist: rawArtist || parsed.artist,
         driveId,
-        cover
+        cover,
+        lyrics: ""
       });
       saveTracks();
 
@@ -1042,7 +1482,8 @@
           title: parsed.title,
           artist: parsed.artist,
           driveId,
-          cover: ""
+          cover: "",
+          lyrics: ""
         });
         added++;
       });
@@ -1097,14 +1538,93 @@
       return null;
     }
 
-    async function playTrackByIndex(idx) {
-      const trk = tracks[idx];
-      if (!trk) {
-        setPlayerStatus("В плейлисте пока нет треков — добавь их в Настройках");
+    function buildAllTracksQueue() {
+      const indices = tracks.map((_, i) => i);
+      return shuffleInfinite ? shuffleArray(indices) : indices;
+    }
+
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    // Нажатие на центральный круг: играет все треки ("общее"), если не задана очередь
+    function onMainCircleClick() {
+      if (!tracks.length) {
+        setPlayerStatus("Сначала добавь трек в Настройках");
         return;
       }
+      if (!queueTrackIndices.length) {
+        sourceLabel = "общее";
+        queueTrackIndices = buildAllTracksQueue();
+        playQueuePos(0);
+        return;
+      }
+      togglePlay();
+    }
+
+    // Запуск конкретно выбранного плейлиста
+    function playPlaylistById(plId) {
+      const pl = playlists.find(p => p.id === plId);
+      if (!pl) return;
+      const indices = pl.trackIds
+        .map(tid => tracks.findIndex(t => t.id === tid))
+        .filter(idx => idx >= 0);
+
+      if (!indices.length) {
+        openPlaylistEditor(pl.id);
+        switchTab("search-playlists");
+        alert("В плейлисте пока нет треков — добавь их ниже.");
+        return;
+      }
+
+      sourceLabel = pl.name;
+      queueTrackIndices = shuffleInfinite ? shuffleArray(indices) : indices;
+      playQueuePos(0);
+    }
+
+    // Запуск из списка всех треков
+    function playTrackFromAllList(trackIdx) {
+      if (!tracks[trackIdx]) return;
+      sourceLabel = "общее";
+      const base = buildAllTracksQueue();
+      const pos = base.indexOf(trackIdx);
+      if (pos > 0) {
+        base.splice(pos, 1);
+        base.unshift(trackIdx);
+      }
+      queueTrackIndices = base;
+      playQueuePos(0);
+    }
+
+    async function playQueuePos(pos) {
+      if (!queueTrackIndices.length) return;
+      if (pos < 0) pos = queueTrackIndices.length - 1;
+      if (pos >= queueTrackIndices.length) {
+        if (shuffleInfinite) {
+          queueTrackIndices = shuffleArray(queueTrackIndices);
+          pos = 0;
+        } else if (repeatQueue) {
+          pos = 0;
+        } else {
+          setPlayerStatus("Очередь завершена");
+          renderPlayerRing();
+          updateAllPlayGlyphs();
+          return;
+        }
+      }
+
+      queuePos = pos;
+      const idx = queueTrackIndices[queuePos];
+      const trk = tracks[idx];
+      if (!trk) return;
+
       currentTrackIdx = idx;
-      updateMiniPlayerUI(trk);
+      syncTrackEverywhere(trk);
       setPlayerStatus("Загрузка с Google Диска...");
 
       audio.pause();
@@ -1114,6 +1634,7 @@
       if (!blob) {
         setPlayerStatus("Не удалось получить аудиопоток");
         renderPlayerRing();
+        updateAllPlayGlyphs();
         return;
       }
 
@@ -1123,72 +1644,299 @@
       audio.play().then(() => {
         setPlayerStatus("Играет");
         renderPlayerRing();
-        updateMiniPlayGlyph();
+        updateAllPlayGlyphs();
       }).catch(err => {
         setPlayerStatus("Ошибка воспроизведения: " + err.message);
         renderPlayerRing();
+        updateAllPlayGlyphs();
       });
     }
 
     function togglePlay() {
       if (!audio.src) {
         if (tracks.length > 0) {
-          playTrackByIndex(currentTrackIdx >= 0 ? currentTrackIdx : 0);
+          if (!queueTrackIndices.length) {
+            sourceLabel = "общее";
+            queueTrackIndices = buildAllTracksQueue();
+          }
+          playQueuePos(queuePos >= 0 ? queuePos : 0);
         } else {
           setPlayerStatus("Сначала добавь трек в Настройках");
         }
         return;
       }
+
       if (audio.paused) {
         audio.play().then(() => {
           setPlayerStatus("Играет");
           renderPlayerRing();
-          updateMiniPlayGlyph();
+          updateAllPlayGlyphs();
         });
       } else {
         audio.pause();
         setPlayerStatus("Пауза");
         renderPlayerRing();
-        updateMiniPlayGlyph();
+        updateAllPlayGlyphs();
       }
     }
 
     function prevTrack() {
-      if (!tracks.length) return;
-      const nextIdx = currentTrackIdx > 0 ? currentTrackIdx - 1 : tracks.length - 1;
-      playTrackByIndex(nextIdx);
+      if (!queueTrackIndices.length) return;
+      playQueuePos(queuePos - 1);
     }
 
     function nextTrack() {
-      if (!tracks.length) return;
-      const nextIdx = currentTrackIdx + 1 < tracks.length ? currentTrackIdx + 1 : 0;
-      playTrackByIndex(nextIdx);
+      if (!queueTrackIndices.length) return;
+      if (shuffleInfinite && queuePos + 1 >= queueTrackIndices.length) {
+        queueTrackIndices = shuffleArray(queueTrackIndices);
+        playQueuePos(0);
+      } else {
+        playQueuePos(queuePos + 1);
+      }
     }
 
     audio.addEventListener("ended", () => {
-      if (currentTrackIdx + 1 < tracks.length) {
-        playTrackByIndex(currentTrackIdx + 1);
-      } else {
-        setPlayerStatus("Плейлист завершён");
-        renderPlayerRing();
-        updateMiniPlayGlyph();
+      if (repeatOne) {
+        audio.currentTime = 0;
+        audio.play();
+        return;
       }
+      nextTrack();
     });
 
-    function updateMiniPlayerUI(trk) {
-      document.getElementById("miniTitle").textContent = trk.title || "Название песни";
-      document.getElementById("miniArtist").textContent = trk.artist || "Исполнитель";
-      const box = document.getElementById("miniCoverBox");
-      if (trk.cover) {
-        box.innerHTML = `<img src="${escapeAttr(trk.cover)}" style="width:100%;height:100%;object-fit:cover;border-radius:7px;" />`;
+    audio.addEventListener("timeupdate", () => {
+      if (isSeeking) return;
+      const cur = audio.currentTime || 0;
+      const dur = audio.duration || 0;
+      document.getElementById("timeCurrent").textContent = formatTime(cur);
+      document.getElementById("timeTotal").textContent = formatTime(dur);
+      const slider = document.getElementById("seekSlider");
+      slider.value = dur > 0 ? Math.round((cur / dur) * 1000) : 0;
+    });
+
+    function onSeekInput() {
+      isSeeking = true;
+      const dur = audio.duration || 0;
+      const ratio = Number(document.getElementById("seekSlider").value) / 1000;
+      document.getElementById("timeCurrent").textContent = formatTime(dur * ratio);
+    }
+
+    function onSeekCommit() {
+      const dur = audio.duration || 0;
+      const ratio = Number(document.getElementById("seekSlider").value) / 1000;
+      if (dur > 0) {
+        audio.currentTime = dur * ratio;
+      }
+      isSeeking = false;
+    }
+
+    function formatTime(sec) {
+      if (!isFinite(sec) || sec < 0) return "00:00";
+      const total = Math.floor(sec);
+      const m = Math.floor(total / 60);
+      const s = total % 60;
+      return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+    }
+
+    function toggleRepeatQueue() {
+      repeatQueue = !repeatQueue;
+      updateModeButtonsUI();
+    }
+
+    function toggleShuffleInfinite() {
+      shuffleInfinite = !shuffleInfinite;
+      if (queueTrackIndices.length > 0 && currentTrackIdx >= 0) {
+        const current = currentTrackIdx;
+        queueTrackIndices = shuffleInfinite
+          ? shuffleArray(queueTrackIndices)
+          : queueTrackIndices.slice().sort((a, b) => a - b);
+        const newPos = queueTrackIndices.indexOf(current);
+        queuePos = newPos >= 0 ? newPos : 0;
+      }
+      updateModeButtonsUI();
+    }
+
+    function toggleRepeatOne() {
+      repeatOne = !repeatOne;
+      updateModeButtonsUI();
+    }
+
+    function updateModeButtonsUI() {
+      document.getElementById("btnRepeatQueue").classList.toggle("active", repeatQueue);
+      document.getElementById("btnShuffleInfinite").classList.toggle("active", shuffleInfinite);
+      document.getElementById("btnRepeatOne").classList.toggle("active", repeatOne);
+    }
+
+    function syncTrackEverywhere(trk) {
+      const title = trk.title || "Название песни";
+      const artist = trk.artist || "Исполнитель";
+
+      // Мини-плеер
+      document.getElementById("miniTitle").textContent = title;
+      document.getElementById("miniArtist").textContent = artist;
+      const miniBox = document.getElementById("miniCoverBox");
+      miniBox.innerHTML = trk.cover
+        ? `<img src="${escapeAttr(trk.cover)}" style="width:100%;height:100%;object-fit:cover;border-radius:7px;" />`
+        : "♪";
+
+      // Полноэкранное окно плеера
+      document.getElementById("sheetSourceTitle").textContent = sourceLabel || "общее";
+      document.getElementById("sheetArtistBox").textContent = artist;
+      const sheetCover = document.getElementById("sheetCoverBox");
+      sheetCover.innerHTML = trk.cover
+        ? `<img src="${escapeAttr(trk.cover)}" alt="Обложка" />`
+        : "♪";
+
+      renderTitleWithMarquee(title);
+      renderLyricsBox(trk);
+    }
+
+    function renderTitleWithMarquee(title) {
+      const titleBox = document.getElementById("sheetTitleBox");
+      const safe = escapeHtml(title);
+      // Если название длинное, включаем зацикленную бегущую строку по кругу
+      if (title.length > 17) {
+        titleBox.innerHTML = `<div class="marquee-box"><span>${safe}</span><span>${safe}</span></div>`;
       } else {
-        box.textContent = "♪";
+        titleBox.textContent = title;
       }
     }
 
-    function updateMiniPlayGlyph() {
+    function renderLyricsBox(trk) {
+      document.getElementById("lyricsTrackHeading").textContent = trk.title || "Текст песни";
+      document.getElementById("lyricsContentBox").textContent =
+        (trk.lyrics && trk.lyrics.trim())
+          ? trk.lyrics
+          : "Текст песни пока не добавлен. Нажми на карандашик сверху, чтобы вставить текст.";
+    }
+
+    function updateAllPlayGlyphs() {
       const playing = !audio.paused && !!audio.src;
-      document.getElementById("miniPlayGlyph").textContent = playing ? "❚❚" : "▶";
+      const glyph = playing ? "❚❚" : "▶";
+      document.getElementById("miniPlayGlyph").textContent = glyph;
+      document.getElementById("sheetPlayGlyph").textContent = glyph;
+    }
+
+    // Выплывание и свайп вниз за верхнюю шторку
+    const sheetEl = document.getElementById("nowPlayingSheet");
+    const dragHandleEl = document.getElementById("sheetDragHandle");
+    let dragStartY = null;
+    let dragDeltaY = 0;
+
+    function openNowPlayingSheet() {
+      if (currentTrackIdx >= 0 && tracks[currentTrackIdx]) {
+        syncTrackEverywhere(tracks[currentTrackIdx]);
+      } else {
+        document.getElementById("sheetSourceTitle").textContent = sourceLabel || "общее";
+      }
+      sheetEl.style.transform = "";
+      sheetEl.classList.add("open");
+    }
+
+    function closeNowPlayingSheet() {
+      document.getElementById("lyricsOverlay").classList.remove("open");
+      document.getElementById("btnOpenLyrics").classList.remove("active");
+      sheetEl.classList.remove("dragging");
+      sheetEl.classList.remove("open");
+      sheetEl.style.transform = "";
+    }
+
+    dragHandleEl.addEventListener("touchstart", e => {
+      if (!e.touches.length) return;
+      dragStartY = e.touches[0].clientY;
+      dragDeltaY = 0;
+      sheetEl.classList.add("dragging");
+    }, { passive: true });
+
+    dragHandleEl.addEventListener("touchmove", e => {
+      if (dragStartY === null || !e.touches.length) return;
+      const dy = e.touches[0].clientY - dragStartY;
+      if (dy > 0) {
+        dragDeltaY = dy;
+        sheetEl.style.transform = `translateY(${dy}px)`;
+      }
+    }, { passive: true });
+
+    dragHandleEl.addEventListener("touchend", () => {
+      if (dragStartY === null) return;
+      sheetEl.classList.remove("dragging");
+      if (dragDeltaY > 95) {
+        closeNowPlayingSheet();
+      } else {
+        sheetEl.style.transform = "translateY(0)";
+      }
+      dragStartY = null;
+      dragDeltaY = 0;
+    });
+
+    function toggleLyricsOverlay() {
+      const overlay = document.getElementById("lyricsOverlay");
+      const openBtn = document.getElementById("btnOpenLyrics");
+      const nextState = !overlay.classList.contains("open");
+      overlay.classList.toggle("open", nextState);
+      openBtn.classList.toggle("active", nextState);
+    }
+
+    // Редактирование трека через карандашик
+    function openEditCurrentTrackModal() {
+      const idx = currentTrackIdx >= 0 ? currentTrackIdx : 0;
+      const trk = tracks[idx];
+      if (!trk) {
+        alert("Сначала выбери или добавь трек.");
+        return;
+      }
+      currentTrackIdx = idx;
+      document.getElementById("editTitleInput").value = trk.title || "";
+      document.getElementById("editArtistInput").value = trk.artist || "";
+      document.getElementById("editCoverUrlInput").value = trk.cover || "";
+      document.getElementById("editCoverFileInput").value = "";
+      document.getElementById("editLyricsInput").value = trk.lyrics || "";
+      document.getElementById("editTrackModal").classList.add("open");
+    }
+
+    function closeEditTrackModal() {
+      document.getElementById("editTrackModal").classList.remove("open");
+    }
+
+    function handleCoverFileUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const maxSize = 320;
+          let w = img.width;
+          let h = img.height;
+          if (w > h && w > maxSize) {
+            h = Math.round((h * maxSize) / w);
+            w = maxSize;
+          } else if (h >= w && h > maxSize) {
+            w = Math.round((w * maxSize) / h);
+            h = maxSize;
+          }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, w, h);
+          document.getElementById("editCoverUrlInput").value = canvas.toDataURL("image/jpeg", 0.78);
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function saveEditedTrack() {
+      const trk = tracks[currentTrackIdx];
+      if (!trk) return;
+      trk.title = document.getElementById("editTitleInput").value.trim() || "Без названия";
+      trk.artist = document.getElementById("editArtistInput").value.trim() || "Неизвестный исполнитель";
+      trk.cover = document.getElementById("editCoverUrlInput").value.trim();
+      trk.lyrics = document.getElementById("editLyricsInput").value;
+      saveTracks();
+      syncTrackEverywhere(trk);
+      closeEditTrackModal();
     }
 
     function renderSongsList() {
@@ -1212,33 +1960,17 @@
         const card = document.createElement("div");
         card.className = "list-card";
         card.innerHTML = `
-          <div class="list-card-main" onclick="playTrackByIndex(${idx})">
+          <div class="list-card-main" onclick="playTrackFromAllList(${idx})">
             <div class="thumb-square">${t.cover ? `<img src="${escapeAttr(t.cover)}" style="width:100%;height:100%;object-fit:cover;border-radius:7px;" />` : "♪"}</div>
             <div class="meta-texts">
               <div class="meta-title">${escapeHtml(t.title)}</div>
               <div class="meta-sub">${escapeHtml(t.artist)}</div>
             </div>
           </div>
-          <div class="field-inline">
-            <button class="btn-small" onclick="editTrackMeta(${idx})">✎</button>
-            <button class="btn-small" onclick="playTrackByIndex(${idx})">▶</button>
-          </div>
+          <button class="btn-small" onclick="playTrackFromAllList(${idx})">▶</button>
         `;
         container.appendChild(card);
       });
-    }
-
-    function editTrackMeta(idx) {
-      const t = tracks[idx];
-      if (!t) return;
-      const newTitle = prompt("Название песни:", t.title);
-      if (newTitle === null) return;
-      const newArtist = prompt("Исполнитель:", t.artist);
-      if (newArtist === null) return;
-      t.title = newTitle.trim() || "Без названия";
-      t.artist = newArtist.trim() || "Неизвестный исполнитель";
-      saveTracks();
-      if (currentTrackIdx === idx) updateMiniPlayerUI(t);
     }
 
     function createPlaylist() {
@@ -1264,10 +1996,7 @@
         div.className = "recent-card";
         if (pl) {
           div.innerHTML = `<div class="recent-card-label">${escapeHtml(pl.name)} (${pl.trackIds.length})</div>`;
-          div.onclick = () => {
-            editingPlaylistId = pl.id;
-            switchTab("search-playlists");
-          };
+          div.onclick = () => playPlaylistById(pl.id);
         } else {
           div.innerHTML = `<div class="recent-card-label">+ плейлист</div>`;
           div.onclick = () => switchTab("search-playlists");
@@ -1286,14 +2015,14 @@
         const card = document.createElement("div");
         card.className = "list-card";
         card.innerHTML = `
-          <div class="list-card-main" onclick="openPlaylistEditor('${pl.id}')">
+          <div class="list-card-main" onclick="playPlaylistById('${pl.id}')">
             <div class="thumb-square">▤</div>
             <div class="meta-texts">
               <div class="meta-title">${escapeHtml(pl.name)}</div>
               <div class="meta-sub">Треков: ${pl.trackIds.length}</div>
             </div>
           </div>
-          <button class="btn-small" onclick="openPlaylistEditor('${pl.id}')">Открыть</button>
+          <button class="btn-small" onclick="openPlaylistEditor('${pl.id}')">Состав</button>
         `;
         box.appendChild(card);
       });
@@ -1331,7 +2060,7 @@
         <div class="hint" style="margin-bottom:8px;">Треки в плейлисте:</div>
         ${insideTracks.length ? insideTracks.map(({ trk, idx }) => `
           <div class="list-card">
-            <div class="meta-texts" onclick="playTrackByIndex(${idx})" style="cursor:pointer;">
+            <div class="meta-texts" onclick="playTrackFromAllList(${idx})" style="cursor:pointer;">
               <div class="meta-title">${escapeHtml(trk.title)}</div>
               <div class="meta-sub">${escapeHtml(trk.artist)}</div>
             </div>
